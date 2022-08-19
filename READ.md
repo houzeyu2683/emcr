@@ -15,4 +15,11 @@
 
 填補遺失值，可分成兩整情況，有一定比例遺失或極少量遺失，資料類型也分成兩種形況，字串或數值，通常是上述的四種狀況，個別處理。
 針對字串類型資料進行數字編碼，針對數值類型資料進行轉換，除了
-4. Encode
+
+
+[數據連結][link-1]
+
+[link-1]:https://files.slack.com/files-pri/T013HA9884Q-F03UUMAB4KA/download/kaggle.zip?origin_team=T013HA9884Q
+
+
+
