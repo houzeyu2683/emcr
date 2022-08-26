@@ -3,24 +3,76 @@
 ##  Load packages.
 import pandas
 import os
+import sklearn.preprocessing
 
 ##
 ##  Storage folder.
-storage = './resource/clean/'
+storage = './resource/kaggle/prototype/clean/'
 os.makedirs(os.path.dirname(storage), exist_ok=True)
 
 ##
 ##  Read sheets.
 path = [
-    './resource/prototype/index.csv', 
-    './resource/prototype/history.csv'
+    './resource/kaggle/prototype/card.csv', 
+    './resource/kaggle/prototype/history.csv'
 ]
-sheet = [(os.path.basename(p), pandas.read_csv(p, dtype=str)) for p in path]
+##  Read the table and set the all value with string type.
+sheet = {os.path.basename(p).split(".")[0]: pandas.read_csv(p, dtype=str) for p in path}
+
+##  Define the data type in the first.
+##  Then handle `card` about infinity and missing value.
+table = sheet.get('card').copy()
+table.head()
+table.isna().sum()
+##  Handle 'first_active_month'.
+variable = 'first_active_month'
+series = table[variable].astype(str).copy()
+series[series=='nan'] = "2017-09"
+table[variable] = series
+##  Handle 'card_id'.
+variable = 'card_id'
+series = table[variable].astype(str).copy()
+table[variable] = series
+##  Handle 'feature_1'.
+variable = 'feature_1'
+series = table[variable].astype(int).copy()
+series = series - series.min()
+table[variable] = series
+##  Handle 'feature_2'.
+variable = 'feature_2'
+series = table[variable].astype(int).copy()
+table[variable] = series
+series = series - series.min()
+##  Handle 'feature_3'.
+variable = 'feature_3'
+series = table[variable].astype(int).copy()
+series = series - series.min()
+table[variable] = series
+##  Handle 'target'.
+variable = 'target'
+series = table[variable].astype(float).copy()
+table[variable] = series
+##  Handle 'source'.
+variable = 'source'
+series = table[variable].astype(str).copy()
+table[variable] = series
 
 ##
-##  Handle missing value of the index table.
-table = sheet[0][1]
-table.loc[table['first_active_month'].isna()] = table['first_active_month'].value_counts().idxmax()
+##  Generate variable base on original information.
+origin = 'first_active_month'
+series = table[origin].astype(str).copy()
+table['first_active_year_point'] = [i.split('-')[0] for i in series]
+table['first_active_month_point'] = [i.split('-')[0] for i in series]
+
+##
+##  Convert character to code.
+for c in ['first_active_month', 'first_active_year_point', 'first_active_month_point']:
+
+    encoder = sklearn.preprocessing.LabelEncoder()
+    _ = encoder.fit(table[c])
+    table[c] = encoder.transform(table[c])
+    continue
+
 table.to_csv(os.path.join(storage, 'index.csv'), index=False)
 table.head()
 del table
