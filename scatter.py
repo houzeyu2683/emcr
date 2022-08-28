@@ -4,10 +4,11 @@
 import pandas
 import numpy
 import os
+import sklearn.preprocessing
 
 ##
 ##  Read sheets.
-resource = "./resource/kaggle/prototype/"
+resource = "./resource/kaggle/prototype/clean/"
 path = [
     os.path.join(resource, 'card.csv'), 
     os.path.join(resource, 'history.csv')
@@ -16,31 +17,30 @@ sheet = {os.path.basename(p).split(".")[0]: pandas.read_csv(p, dtype=str) for p 
 
 ##
 ##  Storage folder.
-storage = './resource/kaggle/prototype/clean/'
+storage = './resource/kaggle/prototype/clean/scatter/'
 os.makedirs(os.path.dirname(storage), exist_ok=True)
 
 ##
 ##  Handle `card`.
 key = 'card'
 table = sheet.get(key)
-table.head()
-
-
-
-
-table['first_active_month'] = table['first_active_month'].astype(str)
-
-table['first_active_month'].isna().sum()
-table['card_id'] = table['card_id'].astype(str)
-table['feature_1'] = table['feature_1'].astype(int)
-
-
 table['feature_1'] = table['feature_1'].astype(float)
 table['feature_2'] = table['feature_2'].astype(float)
 table['feature_3'] = table['feature_3'].astype(float)
 table['target']    = table['target'].astype(float)
 table['mode']      = table['mode'].astype(float)
-table.loc[table['first_active_month'].isna()] = '2017-09'
+##  Generate variable.
+table['first_active_year_unit']  = [i.split('-')[0] for i in table['first_active_month']]
+table['first_active_month_unit'] = [i.split('-')[1] for i in table['first_active_month']]
+##  Convert to code.
+column = ['first_active_month', 'first_active_year_unit', 'first_active_month_unit']
+for c in column:
+    
+    engine = sklearn.preprocessing.LabelEncoder()
+    _ = engine.fit(table[c])
+    table[c] = engine.transform(table[c])
+    continue
+
 table.to_csv(os.path.join(storage, 'card.csv'), index=False)
 del table
 
@@ -68,21 +68,22 @@ table['active_months_lag6']   = table['active_months_lag6'].astype(float)
 table['avg_sales_lag12']      = table['avg_sales_lag12'].astype(float)
 table['avg_purchases_lag12']  = table['avg_purchases_lag12'].astype(float)
 table['active_months_lag12']  = table['active_months_lag12'].astype(float)
-##  Before fill missing value of number, limit the inf to a higher value.
-table.loc[table['avg_purchases_lag3']==numpy.inf, 'avg_purchases_lag3'] = 10000 + 61851.33333333
-table.loc[table['avg_purchases_lag6']==numpy.inf, 'avg_purchases_lag6'] = 10000 + 56077.5
-table.loc[table['avg_purchases_lag12']==numpy.inf, 'avg_purchases_lag12'] = 10000 + 50215.55555556
-for i in table:
-
-    if(table[i].dtype == float): table[i] = table[i] - table[i].min()
-    continue
-
-for i in table:
-
-    if(table[i].dtype == float): table[i] = table[i].fillna(-1.0)
-    if(table[i].dtype != float): table[i] = table[i].fillna('<NA>')
+##  Generate variable.
+table['purchase_date_month'] = [i.split(' ')[0] for i in table['purchase_date']]
+##  Convert to code.
+column = [
+    'authorized_flag', 'category_1', 'category_3', 'merchant_id',
+    'most_recent_sales_range', 'most_recent_purchases_range', 'category_4'
+]
+for c in column:
+    
+    engine = sklearn.preprocessing.LabelEncoder()
+    _ = engine.fit(table[c])
+    table[c] = engine.transform(table[c])
     continue
 
 table.to_csv(os.path.join(storage, 'history.csv'), index=False)
 del table
+
+
 
