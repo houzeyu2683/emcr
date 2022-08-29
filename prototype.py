@@ -5,6 +5,11 @@ import pandas
 import os
 
 ##
+##  Storage folder.
+storage = './resource/kaggle/prototype/'
+os.makedirs(os.path.dirname(storage), exist_ok=True)
+
+##
 ##  Read sheets.
 resource = './resource/kaggle/'
 path = [
@@ -15,46 +20,47 @@ path = [
     os.path.join(resource, 'new_merchant_transactions.csv'),
     os.path.join(resource, 'merchants.csv')
 ]
-sheet = {os.path.basename(p).split('.')[0]: pandas.read_csv(p, dtype=str) for p in path}
-sheet.keys()
+##  Read the table and set the all value with string type.
+sheet = {os.path.basename(p).split(".")[0]: pandas.read_csv(p, dtype=str) for p in path}
 
 ##
-##  Storage folder.
-storage = './resource/kaggle/prototype/'
-os.makedirs(os.path.dirname(storage), exist_ok=True)
-
-##
-##  Combine `train` and `test` to `card`.
+##  Combine `train` and `test` together, save to `card`.
 table = {'train': sheet.get('train'), 'test': sheet.get('test')}
-table['train']['mode'] = 0
-table['test']['mode'] = 1
-table['test']['target'] = None
+table['test']['target'] = -10000
+table['train']['source'] = 'train'
+table['test']['source'] = 'test'
 table['card'] = pandas.concat([table['train'], table['test']], axis=0)
 table['card'].to_csv(os.path.join(storage, 'card.csv'), index=False)
 del table
 
 ##
-##  Combine `historical_transactions`, `new_merchant_transactions` and `merchant`.
+##  Connect `historical_transaction` and `new_merchant_transactions` to one file,
+##  then merge `merchant` together.
 table = {
     'historical_transactions': sheet.get("historical_transactions"), 
     'new_merchant_transactions': sheet.get("new_merchant_transactions"), 
-    'merchant':sheet.get("merchants")
+    'merchant':sheet.get('merchants')
 }
-##  Merge `historical_transactions` and `new_merchant_transactions` to `transaction`.
-##  Then remove repeat row.
-table['transaction'] = pandas.concat([table['historical_transactions'], table['new_merchant_transactions']], axis=0)
+##  Merge `historical_transaction` and `new_merchant_transactions` to `transaction`,
+##  remove repeat row if need.
+table['transaction'] = pandas.concat(
+    [table['historical_transactions'], table['new_merchant_transactions']], 
+    axis=0
+)
 table['transaction'] = table['transaction'].drop_duplicates()
-##  Find `merchant` and `transaction` have some same columns,
-##  Remove some columns of `merchant` if `transaction` already exist.
-##  Keep `merchant_id` exist and merge later.
+##  Found some columns both in `merchant` and `transaction`.
+##  However keep `merchant_id` key,
+##  then remove the other columns of repeat in the `merchant`.
 key = 'merchant_id'
 repeat = list(set(table['transaction'].keys()) & set(table['merchant'].keys()))
 repeat.remove(key)
 table['merchant'] = table['merchant'].drop(repeat, axis=1)
-##  Found 'merchant_id' of `merchant` is not unique,
-##  then drop and keep the last in the table.
+##  Found 'merchant_id' of `merchant` not unique,
+##  then drop and keep the last.
 table['merchant'] = table['merchant'].drop_duplicates(subset=[key], keep='last')
-##  Insert `merchant` to `transaction`, denote `history`.
+##  Merge `merchant` to `transaction`, denote by 'history'.
+##  The fact is some `merchant_id` in `transaction` and not in the `merchant`,
+##  then the `merchant` information will be missing value.
 table['history'] = pandas.merge(table['transaction'], table['merchant'], how='left', on=key)
 table['history'].to_csv(os.path.join(storage, 'history.csv'), index=False)
 del table
