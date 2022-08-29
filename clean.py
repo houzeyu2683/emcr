@@ -67,7 +67,9 @@ table['first_active_month_point'] = [i.split('-')[1] for i in series]
 
 ##
 ##  Convert character to code.
-for c in ['first_active_month', 'first_active_year_point', 'first_active_month_point']:
+loop = ['card_id', 'first_active_month', 'source', 'first_active_year_point', 'first_active_month_point']
+ignore = ['card_id', 'source']
+for c in loop:
 
     encoder = sklearn.preprocessing.LabelEncoder()
     _ = encoder.fit(table[c])
@@ -267,24 +269,3 @@ for c in loop:
 table.head()
 table.to_csv(os.path.join(storage, 'history.csv'), index=False)
 del table
-
-# for i in table:
-
-#     try:
-
-#         value = table[i].astype("float64").copy()
-#         print('{}, max:{}, min:{}'.format(i, value.max(), value.min()))
-#         pass
-
-#     except:
-
-#         print('{} skip'.format(i))
-#         pass
-    
-#     continue
-
-# avg_purchases_lag3, max:inf, min:0.33349533
-# avg_purchases_lag6, max:inf, min:0.16704466
-# avg_purchases_lag12, max:inf, min:0.09832954
-
-
