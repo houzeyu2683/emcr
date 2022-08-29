@@ -2,6 +2,7 @@
 ##
 ##  Load packages.
 import pandas
+import numpy
 import os
 import sklearn.preprocessing
 
@@ -12,6 +13,7 @@ os.makedirs(os.path.dirname(storage), exist_ok=True)
 
 ##
 ##  Read sheets.
+resource = "./resource/kaggle/prototype/"
 path = [
     './resource/kaggle/prototype/card.csv', 
     './resource/kaggle/prototype/history.csv'

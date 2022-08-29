@@ -11,13 +11,14 @@ os.makedirs(os.path.dirname(storage), exist_ok=True)
 
 ##
 ##  Read sheets.
+resource = './resource/kaggle/'
 path = [
-    './resource/kaggle/train.csv', 
-    './resource/kaggle/test.csv', 
-    './resource/kaggle/sample_submission.csv',
-    './resource/kaggle/historical_transactions.csv',
-    './resource/kaggle/new_merchant_transactions.csv',
-    './resource/kaggle/merchants.csv'
+    os.path.join(resource, 'train.csv'), 
+    os.path.join(resource, 'test.csv'), 
+    os.path.join(resource, 'sample_submission.csv'),
+    os.path.join(resource, 'historical_transactions.csv'),
+    os.path.join(resource, 'new_merchant_transactions.csv'),
+    os.path.join(resource, 'merchants.csv')
 ]
 ##  Read the table and set the all value with string type.
 sheet = {os.path.basename(p).split(".")[0]: pandas.read_csv(p, dtype=str) for p in path}
@@ -62,4 +63,4 @@ table['merchant'] = table['merchant'].drop_duplicates(subset=[key], keep='last')
 ##  then the `merchant` information will be missing value.
 table['history'] = pandas.merge(table['transaction'], table['merchant'], how='left', on=key)
 table['history'].to_csv(os.path.join(storage, 'history.csv'), index=False)
-
+del table
