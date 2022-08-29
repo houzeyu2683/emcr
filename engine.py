@@ -10,14 +10,14 @@ import tqdm
 
 ##
 ##  Storage folder.
-storage = './resource/kaggle/prototype/clean/engine/'
+storage = './resource/kaggle/restructure/clean/engine/'
 os.makedirs(os.path.dirname(storage), exist_ok=True)
 
 ##
 ##  Read sheets.
 path = [
-    './resource/kaggle/prototype/clean/card.csv', 
-    './resource/kaggle/prototype/clean/history.csv'
+    './resource/kaggle/restructure/clean/card.csv', 
+    './resource/kaggle/restructure/clean/history.csv'
 ]
 ##  Read the table and set the all value with default type.
 sheet = {os.path.basename(p).split(".")[0]: pandas.read_csv(p) for p in path}
@@ -77,15 +77,11 @@ for i, (c, n) in enumerate(tqdm.tqdm(loop)):
         else: group = pandas.merge(group, g, how='outer', on=index)
         pass
     
-    dump = (group.memory_usage().sum() / 1024**3 > 5) if(not group.empty) else False
+    dump = (group.memory_usage().sum() / 1024**3 > 10) if(not group.empty) else False
     if(dump):
         
         checkpoint = os.path.join(storage, 'general_feature_{}.csv'.format(batch))
         group.to_csv(checkpoint, index=False)
-        print(group.memory_usage().sum() / 1024**3)
-        print(checkpoint)
-        print(group.shape)
-        print(group.head())
         group = pandas.DataFrame()
         batch = batch + 1
 

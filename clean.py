@@ -8,15 +8,15 @@ import sklearn.preprocessing
 
 ##
 ##  Storage folder.
-storage = './resource/kaggle/prototype/clean/'
+storage = './resource/kaggle/restructure/clean/'
 os.makedirs(os.path.dirname(storage), exist_ok=True)
 
 ##
 ##  Read sheets.
-resource = "./resource/kaggle/prototype/"
+resource = "./resource/kaggle/restructure/"
 path = [
-    './resource/kaggle/prototype/card.csv', 
-    './resource/kaggle/prototype/history.csv'
+    './resource/kaggle/restructure/card.csv', 
+    './resource/kaggle/restructure/history.csv'
 ]
 ##  Read the table and set the all value with string type.
 sheet = {os.path.basename(p).split(".")[0]: pandas.read_csv(p, dtype=str) for p in path}
@@ -186,6 +186,8 @@ table[variable] = series
 variable = 'avg_purchases_lag3'
 series = table[variable].astype('float64').copy()
 series = series - series.min()
+ceiling = series[series!=numpy.inf].max() + series[series!=numpy.inf].std()
+series[series==numpy.inf] = ceiling
 series = series.fillna(-1)
 table[variable] = series
 ##  Handle 'active_months_lag3'.
@@ -204,6 +206,8 @@ table[variable] = series
 variable = 'avg_purchases_lag6'
 series = table[variable].astype('float64').copy()
 series = series - series.min()
+ceiling = series[series!=numpy.inf].max() + series[series!=numpy.inf].std()
+series[series==numpy.inf] = ceiling
 series = series.fillna(-1)
 table[variable] = series
 ##  Handle 'active_months_lag6'.
@@ -222,6 +226,8 @@ table[variable] = series
 variable = 'avg_purchases_lag12'
 series = table[variable].astype('float64').copy()
 series = series - series.min()
+ceiling = series[series!=numpy.inf].max() + series[series!=numpy.inf].std()
+series[series==numpy.inf] = ceiling
 series = series.fillna(-1)
 table[variable] = series
 ##  Handle 'active_months_lag12'.
@@ -261,3 +267,24 @@ for c in loop:
 table.head()
 table.to_csv(os.path.join(storage, 'history.csv'), index=False)
 del table
+
+# for i in table:
+
+#     try:
+
+#         value = table[i].astype("float64").copy()
+#         print('{}, max:{}, min:{}'.format(i, value.max(), value.min()))
+#         pass
+
+#     except:
+
+#         print('{} skip'.format(i))
+#         pass
+    
+#     continue
+
+# avg_purchases_lag3, max:inf, min:0.33349533
+# avg_purchases_lag6, max:inf, min:0.16704466
+# avg_purchases_lag12, max:inf, min:0.09832954
+
+
