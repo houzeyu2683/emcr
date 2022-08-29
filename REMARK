@@ -10,3 +10,54 @@
 
 檢查遺失值，針對遺失值進行填補，補完後再轉成可以
 
+
+
+first_active_month              76
+card_id                     325540 xx
+feature_1                        5
+feature_2                        3
+feature_3                        2
+target                      197111 xx
+source                           2 xx
+first_active_year_point          8
+first_active_month_point        12
+dtype: int64
+>>>
+
+
+['authorized_flag', 'card_id', 'city_id', 'category_1', 'installments', 'category_3', 'merchant_category_id', 'merchant_id', 'month_lag', 'purchase_amount', 'purchase_date', 'category_2', 'state_id', 'subsector_id', 'merchant_group_id', 'numerical_1', 'numerical_2', 'most_recent_sales_range', 'most_recent_purchases_range', 'avg_sales_lag3', 'avg_purchases_lag3', 'active_months_lag3', 'avg_sales_lag6', 'avg_purchases_lag6', 'active_months_lag6', 'avg_sales_lag12', 'avg_purchases_lag12', 'active_months_lag12', 'category_4', 'purchase_date_ymd', 'purchase_date_ym', 'purchase_date_y']
+
+>>> sheet.get('history').apply(lambda x: x.nunique())
+authorized_flag                       2
+card_id                          325540  xx
+city_id                             308
+category_1                            2
+installments                         15
+category_3                            4
+merchant_category_id                331
+merchant_id                      334634
+month_lag                            16
+purchase_amount                  221246
+purchase_date                  17717516
+category_2                            6
+state_id                             25
+subsector_id                         41
+merchant_group_id                109389
+numerical_1                         955
+numerical_2                         948
+most_recent_sales_range               6
+most_recent_purchases_range           6
+avg_sales_lag3                     3368
+avg_purchases_lag3                99994
+active_months_lag3                    4
+avg_sales_lag6                     4504
+avg_purchases_lag6               135190
+active_months_lag6                    7
+avg_sales_lag12                    5006
+avg_purchases_lag12              172898
+active_months_lag12                  13
+category_4                            3
+purchase_date_ymd                   485
+purchase_date_ym                     16
+purchase_date_y                       2
+dtype: int64
