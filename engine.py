@@ -81,8 +81,8 @@ del table
 ##
 ##  Statistic feature,
 ##  The definition is base on index, 
-##  group the variable value, compute statistic.
-def statisticize(table, index, variable): 
+##  group the numeric value, compute statistic.
+def statisticize(table, index, numeric): 
 
     statistic = pandas.DataFrame()
     method = [
@@ -100,17 +100,17 @@ def statisticize(table, index, variable):
     ]
     for m in method:
 
-        if(m=='min'):     s = table.groupby(index, as_index=False)[variable].min()
-        if(m=='q1'):      s = table.groupby(index, as_index=False)[variable].quantile(0.25)
-        if(m=='mean'):    s = table.groupby(index, as_index=False)[variable].mean()
-        if(m=='median'):  s = table.groupby(index, as_index=False)[variable].median()
-        if(m=='q3'):      s = table.groupby(index, as_index=False)[variable].quantile(0.75)
-        if(m=='max'):     s = table.groupby(index, as_index=False)[variable].max()
-        if(m=='nunique'): s = table.groupby(index, as_index=False)[variable].nunique()
-        if(m=='sum'):     s = table.groupby(index, as_index=False)[variable].sum()
-        if(m=='std'):     s = table.groupby(index, as_index=False)[variable].std()
-        if(m=='skew'):    s = table.groupby(index, as_index=False)[variable].apply(pandas.DataFrame.skew)
-        if(m=='kurt'):    s = table.groupby(index, as_index=False)[variable].apply(pandas.DataFrame.kurt)        
+        if(m=='min'):     s = table.groupby(index, as_index=False)[numeric].min()
+        if(m=='q1'):      s = table.groupby(index, as_index=False)[numeric].quantile(0.25)
+        if(m=='mean'):    s = table.groupby(index, as_index=False)[numeric].mean()
+        if(m=='median'):  s = table.groupby(index, as_index=False)[numeric].median()
+        if(m=='q3'):      s = table.groupby(index, as_index=False)[numeric].quantile(0.75)
+        if(m=='max'):     s = table.groupby(index, as_index=False)[numeric].max()
+        if(m=='nunique'): s = table.groupby(index, as_index=False)[numeric].nunique()
+        if(m=='sum'):     s = table.groupby(index, as_index=False)[numeric].sum()
+        if(m=='std'):     s = table.groupby(index, as_index=False)[numeric].std()
+        if(m=='skew'):    s = table.groupby(index, as_index=False)[numeric].apply(pandas.DataFrame.skew)
+        if(m=='kurt'):    s = table.groupby(index, as_index=False)[numeric].apply(pandas.DataFrame.kurt)        
         c = s.columns.tolist()
         c[1] = '{}_{}'.format(c[1], m)
         s.columns = c
