@@ -8,21 +8,22 @@ import sklearn.preprocessing
 
 ##
 ##  Storage folder.
-storage = './resource/kaggle/restructure/clean/'
+storage = './resource/kaggle/restructuring/cleaning/'
 os.makedirs(os.path.dirname(storage), exist_ok=True)
 
 ##
 ##  Read sheets.
-resource = "./resource/kaggle/restructure/"
+resource = "./resource/kaggle/restructuring/"
 path = [
-    './resource/kaggle/restructure/card.csv', 
-    './resource/kaggle/restructure/history.csv'
+    os.path.join(resource, 'card.csv'), 
+    os.path.join(resource, 'history.csv')
 ]
 ##  Read the table and set the all value with string type.
 sheet = {os.path.basename(p).split(".")[0]: pandas.read_csv(p, dtype=str) for p in path}
 
-##  Handle `card`, convert the data type in the first.
-##  If numeric variable without target, move to positive range,
+##  Handle `card`.
+##  Convert the data type in the first,
+##  if numeric, move to positive range.
 ##  Handle missing value, maybe fill value or other way.
 table = sheet.get('card').copy()
 ##  Handle 'first_active_month'.
@@ -59,16 +60,15 @@ series = table[variable].astype("str").copy()
 table[variable] = series
 
 ##
-##  Generate variable base on original information.
+##  Generate variable base on origin.
 origin = 'first_active_month'
 series = table[origin].copy()
 table['first_active_year_point'] = [i.split('-')[0] for i in series]
 table['first_active_month_point'] = [i.split('-')[1] for i in series]
 
 ##
-##  Convert character to code.
-loop = ['card_id', 'first_active_month', 'source', 'first_active_year_point', 'first_active_month_point']
-ignore = ['card_id', 'source']
+##  Category convert to code.
+loop = ['first_active_month', 'first_active_year_point', 'first_active_month_point']
 for c in loop:
 
     encoder = sklearn.preprocessing.LabelEncoder()
@@ -77,11 +77,16 @@ for c in loop:
     continue
 
 table.head()
-table.to_csv(os.path.join(storage, 'card.csv'), index=False)
-del table
+key = ['card_id', 'target', 'source']
+table[key].to_csv(os.path.join(storage, 'index.csv'), index=False)
+key = ['card_id', 'first_active_month', 'feature_1', 'feature_2', 'feature_3']
+table[key].to_csv(os.path.join(storage, 'card.csv'), index=False)
 
 ##
-##  Handle `history`, convert the data type in the first.
+##  Handle `history`,
+##  convert the data type.
+##  if numeric, move to positive range.
+##  Handle missing value, maybe fill value or other way.
 table = sheet.get('history').copy()
 ##  Handle 'authorized_flag'.
 variable = 'authorized_flag'
@@ -245,7 +250,7 @@ series[series=='nan'] = "-1"
 table[variable] = series
 
 ##
-##  Generate variable base on original information.
+##  Generate variable base on original.
 origin = 'purchase_date'
 series = table[origin].copy()
 table['purchase_date_ymd'] = [i.split(" ")[0] for i in series]
@@ -253,9 +258,9 @@ table['purchase_date_ym'] = ["-".join(i.split(" ")[0].split('-')[0:2]) for i in 
 table['purchase_date_y'] = ["-".join(i.split(" ")[0].split('-')[0:1]) for i in series]
 
 ##
-##  Convert character to code.
+##  Convert category to code.
 loop = [
-    'authorized_flag', 'category_1', 'category_3', 'merchant_id', 'purchase_date',
+    'authorized_flag', 'category_1', 'category_3', 'merchant_id',
     'most_recent_sales_range', 'most_recent_purchases_range', 'category_4',
     'purchase_date_ymd', 'purchase_date_ym', 'purchase_date_y'
 ]
@@ -267,5 +272,21 @@ for c in loop:
     continue
 
 table.head()
-table.to_csv(os.path.join(storage, 'history.csv'), index=False)
-del table
+key = [
+    'card_id', 'authorized_flag', 
+    'city_id', 'category_1', 'installments', 
+    'category_3', 'merchant_category_id', 
+    'merchant_id', 'month_lag', 'purchase_amount', 
+    'category_2', 'state_id', 'subsector_id',
+    'merchant_group_id', 'numerical_1', 'numerical_2', 
+    'most_recent_sales_range', 
+    'most_recent_purchases_range',
+    'avg_sales_lag3', 'avg_purchases_lag3', 
+    'active_months_lag3', 'avg_sales_lag6', 
+    'avg_purchases_lag6', 'active_months_lag6', 
+    'avg_sales_lag12', 'avg_purchases_lag12',
+    'active_months_lag12', 'category_4', 
+    'purchase_date_ymd', 'purchase_date_ym',
+    'purchase_date_y'
+]
+table[key].to_csv(os.path.join(storage, 'history.csv'), index=False)

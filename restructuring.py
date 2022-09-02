@@ -6,7 +6,7 @@ import os
 
 ##
 ##  Storage folder.
-storage = './resource/kaggle/restructure/'
+storage = './resource/kaggle/restructuring/'
 os.makedirs(os.path.dirname(storage), exist_ok=True)
 
 ##
@@ -31,7 +31,6 @@ table['train']['source'] = 'train'
 table['test']['source'] = 'test'
 table['card'] = pandas.concat([table['train'], table['test']], axis=0)
 table['card'].to_csv(os.path.join(storage, 'card.csv'), index=False)
-del table
 
 ##
 ##  Connect `historical_transaction` and `new_merchant_transactions` to one file,
@@ -63,4 +62,4 @@ table['merchant'] = table['merchant'].drop_duplicates(subset=[key], keep='last')
 ##  then the `merchant` information will be missing value.
 table['history'] = pandas.merge(table['transaction'], table['merchant'], how='left', on=key)
 table['history'].to_csv(os.path.join(storage, 'history.csv'), index=False)
-del table
+

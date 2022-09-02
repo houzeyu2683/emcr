@@ -8,17 +8,37 @@ import tqdm
 
 ##
 ##  Storage folder.
-storage = './resource/kaggle/restructure/clean/engine/'
+storage = './resource/kaggle/restructuring/cleaning/engineering/'
 os.makedirs(os.path.dirname(storage), exist_ok=True)
 
 ##
 ##  Read sheets.
+resource = './resource/kaggle/restructuring/cleaning'
 path = [
-    './resource/kaggle/restructure/clean/card.csv', 
-    './resource/kaggle/restructure/clean/history.csv'
+    os.path.join(resource, 'index.csv'), 
+    os.path.join(resource, 'card.csv'), 
+    os.path.join(resource, 'history.csv')
 ]
 ##  Read the table and set the all value with default type.
 sheet = {os.path.basename(p).split(".")[0]: pandas.read_csv(p) for p in path}
+
+##
+##  Handle `index`.
+table = sheet.get('index').copy()
+table.head()
+checkpoint = os.path.join(storage, 'index.csv')
+table.to_csv(checkpoint, index=False)
+
+##
+##  Handle `card`.
+table = sheet.get('card')
+table.head()
+checkpoint = os.path.join(storage, 'card.csv')
+table.to_csv(checkpoint, index=False)
+
+##
+##  Handle `history`.
+table = sheet.get('history').copy()
 
 ##
 ##  Combination feature,
@@ -34,7 +54,6 @@ def combine(table, index, category, numeric, aggregation='sum'):
 
 ##
 ##  Assign category to numeric if unique number more than 100.
-table = sheet.get('history').copy()
 index = 'card_id'
 category = [
     'authorized_flag', 'category_1', 'installments',
@@ -45,7 +64,7 @@ category = [
 ]
 numeric = [
     'city_id', 'merchant_category_id', 'merchant_id',
-    'purchase_amount', 'purchase_date', 'merchant_group_id',
+    'purchase_amount', 'merchant_group_id',
     'numerical_1', 'numerical_2', 'avg_sales_lag3', 
     'avg_purchases_lag3', 'avg_sales_lag6', 'avg_purchases_lag6',
     'avg_sales_lag12', 'avg_purchases_lag12', 'purchase_date_ymd'
@@ -53,30 +72,21 @@ numeric = [
 loop = list(itertools.product(category, numeric))
 for i, (c, n) in enumerate(tqdm.tqdm(loop)): 
 
-    if(i==0): 
-        
-        group = pandas.DataFrame()
-        batch = 0
-        pass
+    if(i==0): group, batch = pandas.DataFrame(), 0
+    g = combine(table=table, index=index, category=c, numeric=n, aggregation='sum')
+    if(group.empty): group = g
+    else: group = pandas.merge(group, g, how='outer', on=index)
+    pass
 
-    if(c!=n): 
-        
-        g = combine(table=table, index=index, category=c, numeric=n, aggregation='sum')
-        if(group.empty): group = g
-        else: group = pandas.merge(group, g, how='outer', on=index)
-        pass
-    
-    dump = (group.memory_usage().sum() / 1024**3 > 10) if(not group.empty) else False
+    dump = (group.memory_usage().sum() / 1024**3 > 1) if(not group.empty) else False
     if(dump or i==len(loop)-1):
         
-        checkpoint = os.path.join(storage, 'combination_feature_{}.csv'.format(batch))
+        checkpoint = os.path.join(storage, 'history_combination_feature_{}.csv'.format(batch))
         group.to_csv(checkpoint, index=False)
         group = pandas.DataFrame()
         batch = batch + 1
 
     continue
-
-del table
 
 ##
 ##  Statistic feature,
@@ -120,10 +130,9 @@ def statisticize(table, index, numeric):
     return(statistic)
 
 ##
-##
-table = sheet.get('history').copy()
+##  Assign all to numerice.
 index = 'card_id'
-variable = [
+numeric = [
     'authorized_flag', 'city_id', 'category_1', 'installments', 
     'category_3', 'merchant_category_id', 'month_lag', 
     'purchase_amount', 'category_2', 'state_id', 'subsector_id', 
@@ -135,8 +144,8 @@ variable = [
     'active_months_lag12', 'category_4', 'purchase_date_ymd', 
     'purchase_date_ym', 'purchase_date_y'
 ]
-loop = variable
-for i, v in enumerate(tqdm.tqdm(loop)): 
+loop = numeric
+for i, n in enumerate(tqdm.tqdm(loop)): 
     
     if(i==0): 
         
@@ -144,18 +153,16 @@ for i, v in enumerate(tqdm.tqdm(loop)):
         batch = 0
         pass
 
-    g = statisticize(table=table, index=index, variable=v)
+    g = statisticize(table=table, index=index, numeric=n)
     if(group.empty): group = g
     else: group = pandas.merge(group, g, how='outer', on=index)
-    dump = (group.memory_usage().sum() / 1024**3 > 10) if(not group.empty) else False
+    dump = (group.memory_usage().sum() / 1024**3 > 5) if(not group.empty) else False
     if(dump or i==len(loop)-1):
         
-        checkpoint = os.path.join(storage, 'statistic_feature_{}.csv'.format(batch))
+        checkpoint = os.path.join(storage, 'history_statistic_feature_{}.csv'.format(batch))
         group.to_csv(checkpoint, index=False)
         group = pandas.DataFrame()
         batch = batch + 1
 
     continue
-
-del table
 
