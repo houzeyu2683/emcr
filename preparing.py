@@ -7,7 +7,7 @@ import functools
 
 ##
 ##  Storage folder.
-storage = './resource/kaggle/restructuring/cleaning/engineering/preparing'
+storage = './resource/kaggle/restructuring/cleaning/engineering/preparing/'
 os.makedirs(os.path.dirname(storage), exist_ok=True)
 
 ##
@@ -28,9 +28,17 @@ path = [
 sheet = {os.path.basename(p).split(".")[0]: pandas.read_csv(p) for p in path}
 
 ##
-##
+##  Integration.
 index = 'card_id'
 gather = lambda x, y: pandas.merge(x, y, how='outer', on=index) 
 integration = functools.reduce(gather, sheet.values())
 
-integration.loc[integration['source']=='train'].shape
+##
+##  Group by source
+group = {}
+group['train'] = integration.loc[integration['source']=='train', ~integration.columns.isin(['source'])]
+group['test'] = integration.loc[integration['source']=='test', ~integration.columns.isin(['source'])]
+group['train'].to_csv(os.path.join(storage, 'train.csv'), index=False)
+group['test'].to_csv(os.path.join(storage, 'test.csv'), index=False)
+
+
