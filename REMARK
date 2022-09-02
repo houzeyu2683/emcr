@@ -61,3 +61,10 @@ purchase_date_ymd                   485
 purchase_date_ym                     16
 purchase_date_y                       2
 dtype: int64
+
+
+
+
+grid search 找出參數之前最好先挑一次特徵
+特徵挑法則是給定一組參數去跑CV找出variabel importance 從中去挑。
+挑完再去 grid search + cv 。

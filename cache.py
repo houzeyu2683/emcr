@@ -1,33 +1,4 @@
-# %% [markdown]
-# # <center>《Kaggle Top 1%方案精讲与实践》
 
-# %% [markdown]
-# # <font face="仿宋">课程说明：
-
-# %% [markdown]
-# &emsp;&emsp;<font face="仿宋">小伙伴好呀\~欢迎来到《2021机器学习实战训练营》试学体验课！我是课程主讲老师，九天。       
-# &emsp;&emsp;本次体验课为期三天（12月8-10号），期间每晚8点在我的B站直播间公开直播，直播间地址:https://live.bilibili.com/22678166      
-# &emsp;&emsp;本期公开课的内容是在上一轮Kaggle竞赛公开课（《Elo Merchant Category Recommendation》）的基础上，进一步探讨如何进一步将排名提升至1%。在接下来的三天内容中，我们将进一步尝试多模型建模与优化、模型融合方法、特征优化与Trick优化等方法，从而在此前的结果基础上大幅提高模型预测准确率。        
-# &emsp;&emsp;当然，没有参与上一轮公开课的小伙伴也不用担心，本轮公开课将在开始时我们将快速回顾上一轮公开课内容，并将提供上一轮公开课最终完成的数据处理结果与相关代码，帮助大家无门槛进入本轮课程内容的学习中。当然，如果时间允许，也希望大家能够通过观看上一轮公开课的直播录屏，以巩固相关知识。上一轮公开课直播录屏地址：https://www.bilibili.com/video/BV1QU4y1u7Ph      
-# &emsp;&emsp;课程资料/赛题数据/课程代码/付费课程信息，扫码添加客服“小可爱”回复【kaggle】即可领取哦~
-
-# %% [markdown]
-# <center><img src="https://i.loli.net/2021/10/20/ZWTgxSiNY1db9eL.png" alt="二维码" style="zoom:33%;" />
-
-# %% [markdown]
-# &emsp;&emsp;<font face="仿宋">另外，双十二年终大促持续进行中，十八周80+课时体系大课限时七折，扫码咨询小可爱回复“优惠”，还可领取额外折上折优惠，课程主页：https://appze9inzwc2314.pc.xiaoe-tech.com
-
-# %% [markdown]
-# ---
-
-# %% [markdown]
-# # <center>【Kaggle】Elo Merchant Category Recommendation    
-# # <center> 竞赛案例解析公开课 Part II
-
-# %% [markdown]
-# # <center>Day 5.集成学习与模型融合
-
-# %%
 import numpy as np
 import pandas as pd
 import lightgbm as lgb
@@ -36,57 +7,13 @@ from hyperopt import hp, fmin, tpe
 from numpy.random import RandomState
 from sklearn.metrics import mean_squared_error
 
-# %%
 train = pd.read_csv('preprocess/train.csv')
 test = pd.read_csv('preprocess/test.csv')
 
-# %% [markdown]
-# ---
-
-# %% [markdown]
-# ## <center> 一、单模训练策略（二）
-# ## <center>**Wrapper特征筛选+LightGBM建模+TPE调优**
-
-# %% [markdown]
-# &emsp;&emsp;接下来我们进一步尝试Wrapper特征筛选+LightGBM建模+TPE调优的建模策略。相比随机森林这种老牌集成模型，LightGBM则算是Boosting家族中的新秀，LightGBM源自微软旗下的一个项目（Distributed Machine Learning Toolkit （DMKT）），同样是GBDT的一种实现方式，LightGBM支持高效率的并行训练，并且具有更快的训练速度、更低的内存消耗、更好的准确率、支持分布式可以快速处理海量数据等优点。
-
-# %% [markdown]
-# &emsp;&emsp;首次使用LightGBM时需要对其单独进行安装，可以直接使用pip工具按照如下指令完成安装：
-
-# %% [markdown]
-# <center>pip install LightGBM
-
-# %% [markdown]
-# &emsp;&emsp;安装完即可按照如下方式进行导入：
-
-# %%
 import lightgbm as lgb
 
-# %% [markdown]
-# &emsp;&emsp;此外，本次建模过程中将使用hyperopt优化器进行超参数搜索，hyperopt优化器也是贝叶斯优化器的一种，可以进行连续变量和离散变量的搜索，目前支持的搜索算法包括随机搜索（random search）、模拟退火（simulated annealing）和TPE（Tree of Parzen Estimator）算法，相比网格搜索，hyperopt效率更快、精度更高。首次使用hyperopt库可使用pip进行安装：
-
-# %% [markdown]
-# <center>pip install hyperopt
-
-# %% [markdown]
-# 安装完成后按照如下方式进行导入：
-
-# %%
 from hyperopt import hp, fmin, tpe
 
-# %% [markdown]
-# 其中hp是参数空间创建函数，fmin是参数搜索函数，tpe则是一种基于贝叶斯过程的搜索策略。
-
-# %% [markdown]
-# &emsp;&emsp;同时，在本次建模中，我们也将采用wrapper方法进行特征筛选，即根据模型输出结果来进行特征筛选，由于很多时候相关系数并不能很好的衡量特征实际对于标签的重要性，因此wrapper筛选的特征往往更加有效。当然，如果希望我们特征筛选结果更加具有可信度，则可以配合交叉验证过程对其进行筛选。
-
-# %% [markdown]
-# ### 1.Wrapper特征筛选
-
-# %% [markdown]
-# &emsp;&emsp;接下来是特征筛选过程，此处先择使用Wrapper方法进行特征筛选，通过带入全部数据训练一个LightGBM模型，然后通过观察特征重要性，选取最重要的300个特征。当然，为了进一步确保挑选过程的有效性，此处我们考虑使用交叉验证的方法来进行多轮验证。实际多轮验证特征重要性的过程也较为清晰，我们只需要记录每一轮特征重要性，并在最后进行简单汇总即可。我们可以通过定义如下函数完成该过程：
-
-# %%
 def feature_select_wrapper(train, test):
     """
     lgm特征重要性筛选函数
@@ -153,31 +80,11 @@ def feature_select_wrapper(train, test):
     print('done')
     return train[feature_select + ['target']], test[feature_select]
 
-# %%
 train_LGBM, test_LGBM = feature_select_wrapper(train, test)
 
-# %% [markdown]
-# 查看最终输出结果：
-
-# %%
 train_LGBM.shape
 
-# %% [markdown]
-# &emsp;&emsp;接下来，我们即可带入经过筛选的特征进行建模。
 
-# %% [markdown]
-# ### 2.LightGBM模型训练与TPE参数优化
-
-# %% [markdown]
-# &emsp;&emsp;接下来，我们进行LightGBM的模型训练过程，和此前的随机森林建模过程类似，我们需要在训练模型的过程同时进行超参数的搜索调优。为了能够更好的借助hyperopt进行超参数搜索，此处我们考虑使用LightGBM的原生算法库进行建模，并将整个算法建模流程封装在若干个函数  内执行。
-
-# %% [markdown]
-# - 参数回调函数
-
-# %% [markdown]
-# &emsp;&emsp;首先对于lgb模型来说，并不是所有的超参数都需要进行搜索，为了防止多次实例化模型过程中部分超参数被设置成默认参数，此处我们首先需要创建一个参数回调函数，用于在后续多次实例化模型过程中反复申明这部分参数的固定取值：
-
-# %%
 def params_append(params):
     """
     动态回调参数函数，params视作字典
@@ -190,13 +97,6 @@ def params_append(params):
     params['bagging_seed'] = 2020
     return params
 
-# %% [markdown]
-# - 模型训练与参数优化函数
-
-# %% [markdown]
-# &emsp;&emsp;接下来就是更加复杂的模型训练与超参数调优的的过程。不同于sklearn内部的调参过程，此处由于涉及多个不同的库相互协同，外加本身lgb模型参数就较为复杂，因此整体模型训练与优化过程较为复杂，我们可以通过下述函数来执行该过程：
-
-# %%
 def param_hyperopt(train):
     """
     模型参数搜索与优化函数
@@ -258,31 +158,10 @@ def param_hyperopt(train):
     # 返回最佳参数
     return params_best
 
-# %% [markdown]
-# 接下来我们带入训练数据，测试函数性能：
-
-# %%
 best_clf = param_hyperopt(train_LGBM)
 
-# %% [markdown]
-# 此时best_clf即为lgb模型的最优参数组。
-
-# %%
 best_clf
 
-# %% [markdown]
-# ### 3.LightGBM模型预测与结果排名
-
-# %% [markdown]
-# &emsp;&emsp;在搜索出最优参数后，接下来即可进行模型预测了。和此前一样，在实际执行预测时有两种思路，其一是单模型预测，即直接针对测试集进行预测并提交结果，其二则是通过交叉验证提交平均得分，并且在此过程中能同时保留下后续用于stacking集成时所需要用到的数据。
-
-# %% [markdown]
-# - 单模型预测
-
-# %% [markdown]
-# &emsp;&emsp;首先测试单独模型在测试集上的预测效果：
-
-# %%
 # 再次申明固定参数
 best_clf = params_append(best_clf)
 
@@ -295,60 +174,20 @@ features.remove('target')
 # 数据封装
 lgb_train = lgb.Dataset(train_LGBM[features], train_LGBM[label])
 
-# %%
-# 在全部数据集上训练模型
 bst = lgb.train(best_clf, lgb_train)
 
-# %%
 # 在测试集上完成预测
 bst.predict(train_LGBM[features])
 
-# %%
 # 简单查看训练集RMSE
 np.sqrt(mean_squared_error(train_LGBM[label], bst.predict(train_LGBM[features])))
 
-# %% [markdown]
-# 接下来，对测试集进行预测，并将结果写入本地文件
-
-# %%
 test_LGBM['target'] = bst.predict(test_LGBM[features])
 test_LGBM[['card_id', 'target']].to_csv("result/submission_LGBM.csv", index=False)
 
-# %%
 test_LGBM[['card_id', 'target']].head(5)
 
-# %% [markdown]
-# 提交该结果，得到公榜、私榜结果如下：
 
-# %% [markdown]
-# <center><img src="https://s2.loli.net/2021/12/09/GowrHnvJWMOpxB4.png" alt="image-20211209172112868" style="zoom:33%;" />
-
-# %% [markdown]
-# 对比此前的随机森林提交的两组结果，汇总情况如下：
-
-# %% [markdown]
-# | 模型 | Private Score | Public Score |
-# | ------ | ------ | ------ |
-# | randomforest | 3.65455 | 3.74969 |
-# | randomforest+validation | 3.65173 | 3.74954 |
-# | LightGBM | 3.69723 | 3.80436 |
-
-# %% [markdown]
-# 能够发现，在单模型预测情况下，lgb要略弱于rf，接下来考虑进行交叉验证，以提高lgb模型预测效果。
-
-# %% [markdown]
-# - 结合交叉验证进行模型预测
-
-# %% [markdown]
-# &emsp;&emsp;和随机森林借助交叉验证进行模型预测的过程类似，lgb也需要遵照如下流程进行训练和预测，并同时创建后续集成所需数据集以及预测结果的平均值（作为最终预测结果）
-
-# %% [markdown]
-# <center><img src="https://s2.loli.net/2021/12/08/ALF3cfuSwmB7b8z.png" alt="image-20211208192640281" style="zoom:33%;" />
-
-# %% [markdown]
-# 执行过程如下：
-
-# %%
 def train_predict(train, test, params):
     """
 
@@ -416,46 +255,11 @@ def train_predict(train, test, params):
     test[['card_id', 'target']].to_csv("result/submission_lightgbm.csv", index=False)
     return
 
-# %%
 train_LGBM, test_LGBM = feature_select_wrapper(train, test)
 best_clf = param_hyperopt(train_LGBM)
 train_predict(train_LGBM, test_LGBM, best_clf)
 
-# %% [markdown]
-# 接下来即可在竞赛主页提交预测结果。最终公榜私榜评分如下：
 
-# %% [markdown]
-# <center><img src="https://s2.loli.net/2021/12/09/EnekwUaMIVKQfDt.png" alt="image-20211209173249232" style="zoom:50%;" />
-
-# %% [markdown]
-# 对比此前结果：
-
-# %% [markdown]
-# | 模型 | Private Score | Public Score |
-# | ------ | ------ | ------ |
-# | randomforest | 3.65455 | 3.74969 |
-# | randomforest+validation | 3.65173 | 3.74954 |
-# | LightGBM | 3.69723 | 3.80436 |
-# | LightGBM+validation | 3.64403 | 3.73875 |
-
-# %% [markdown]
-# 能够看出，经过交叉验证后输出的平均值结果，较此前的预测评分，有较大提升，这也是目前我们跑出的最好成绩。同时，交叉验证的作用已得到充分征明，后续在进行其他模型训练时仅考虑模型+交叉验证的输出结果，不再进行单模型结果输出。
-
-# %% [markdown]
-# ---
-
-# %% [markdown]
-# ## <center> 二、单模训练策略（三）
-# ## <center> **NLP特征优化+XGBoost建模+贝叶斯优化器**
-
-# %% [markdown]
-# &emsp;&emsp;在执行完随机森林与LightGBM后，我们已经对不同集成算法的竞赛建模流程有了一定的了解，大家可以照此思路继续尝试其他集成模型。当然，如果想进一步优化提升模型效果，我们可以考虑围绕数据集中的部分ID字段进行NLP特征优化。因此，接下来，我们考虑采用CountVectorizer, TfidfVectorizer两种方法对数据集中部分特征进行NLP特征衍生，并且采用XGBoost模型进行预测，同时考虑进一步使用另一种贝叶斯优化器（bayes_opt）来进行模型参数调优。
-
-# %% [markdown]
-# > 当然，此处训练的三个模型分别采用了不同的优化器、甚至是采用了不同的特征衍生的方法，也是为了令这三个模型尽可能的存在一定的差异性，从而为后续的模型融合的融合效果做铺垫。
-
-# %% [markdown]
-# ### 1.NLP特征优化
 
 # %% [markdown]
 # &emsp;&emsp;首先我们注意到，在数据集中存在大量的ID相关的列（除了card_id外），包括'merchant_id'、'merchant_category_id'、'state_id'、'subsector_id'、'city_id'等，考虑到这些ID在出现频率方面都和用户实际的交易行为息息相关，例如对于单独用户A来说，在其交易记录中频繁出现某商户id（假设为B），则说明该用户A对商户B情有独钟，而如果在不同的用户交易数据中，都频繁的出现了商户B，则说明这家商户受到广泛欢迎，而进一步的说明A的喜好可能和大多数用户一致，而反之则说明A用户的喜好较为独特。为了能够挖掘出类似信息，我们可以考虑采用NLP中CountVector和TF-IDF两种方法来进行进一步特征衍生，其中CountVector可以挖掘类似某用户钟爱某商铺的信息，而TF-IDF则可进一步挖掘出类似某用户的喜好是否普遍或一致等信息。
