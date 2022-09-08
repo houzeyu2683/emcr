@@ -26,6 +26,7 @@ sheet = {os.path.basename(p).split(".")[0]: pandas.read_csv(p, dtype=str) for p 
 ##
 ##  Combine `train` and `test` together, save to `card`.
 table = {'train': sheet.get('train'), 'test': sheet.get('test')}
+##  In `test`, fill special symbol to `target` column.
 table['test']['target'] = -10000
 table['train']['source'] = 'train'
 table['test']['source'] = 'test'
