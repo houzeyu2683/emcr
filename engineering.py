@@ -15,35 +15,38 @@ os.makedirs(os.path.dirname(storage), exist_ok=True)
 ##  Read sheets.
 resource = './resource/kaggle/restructuring/cleaning'
 path = [
-    # os.path.join(resource, 'index.csv'), 
-    # os.path.join(resource, 'card.csv'), 
+    os.path.join(resource, 'index.csv'), 
+    os.path.join(resource, 'card.csv'), 
     os.path.join(resource, 'history.csv')
 ]
 ##  Read the table and set the all value with default type.
 sheet = {os.path.basename(p).split(".")[0]: pandas.read_csv(p) for p in path}
 
 ##
-##  Handle `index`.
+##  From `index` to `index`.
 table = sheet.get('index').copy()
-table.head()
 checkpoint = os.path.join(storage, 'index.csv')
-table.to_csv(checkpoint, index=False)
+key = ['card_id', 'target', 'source']
+table[key].to_csv(checkpoint, index=False)
 
 ##
-##  Handle `card`.
+##  From `card` to `card`.
 table = sheet.get('card')
-table.head()
 checkpoint = os.path.join(storage, 'card.csv')
+key = [
+    'card_id', 'feature_1', 'feature_2', 'feature_3', 
+    'first_active_month_label_code', 
+    'first_active_year_unit_label_code', 
+    'first_active_month_unit_label_code'    
+]
 table.to_csv(checkpoint, index=False)
 
 ##
-##  Handle `history`.
+##  From `history` to `history_combination`.
 table = sheet.get('history').copy()
 
 ##
-##  Combination feature,
-##  The definition is base on index, 
-##  group the category value, aggregate the numeric value, compute combination.
+##  Combination function.
 def combine(table, index, category, numeric, aggregation='sum'):
 
     pivot = table.pivot_table(values=numeric, index=index, columns=category, aggfunc=aggregation, fill_value=0).copy()
@@ -53,35 +56,47 @@ def combine(table, index, category, numeric, aggregation='sum'):
     return(combination)
 
 ##
-##  Assign category to numeric if unique number more than 100.
+##  Assign category and numeric term, ignore some which inappropriate.
 index = 'card_id'
+_ = [
+    "authorized_flag", 'category_1', 'category_3', 'merchant_id',
+    'purchase_date', 'merchant_group_id', 'most_recent_sales_range', 
+    'most_recent_purchases_range', 'category_4', 
+    'purchase_date_year_month_day_unit', 'purchase_date_year_month_unit',
+    "purchase_date_year_unit", "merchant_id_label_code", 
+    "purchase_date_label_code"
+]
 category = [
-    'authorized_flag', 'category_1', 'installments',
-    'category_3', 'month_lag', 'category_2', 'state_id', 
-    'subsector_id', 'most_recent_sales_range', 'most_recent_purchases_range',
-    'active_months_lag3', 'active_months_lag6', 'active_months_lag12',
-    'category_4', 'purchase_date_ym', 'purchase_date_y'
+    'installments', 'month_lag', 'category_2', 'state_id', 
+    'subsector_id', 'active_months_lag3', 'active_months_lag6', 
+    'active_months_lag12', 'authorized_flag_label_code', 
+    "category_1_label_code", "category_3_label_code", 
+    "most_recent_sales_range_label_code", 
+    "most_recent_purchases_range_label_code", "category_4_label_code", 
+    "purchase_date_year_month_unit_label_code", 
+    "purchase_date_year_unit_label_code" 
 ]
 numeric = [
-    'city_id', 'merchant_category_id', 'merchant_id',
-    'purchase_amount', 'merchant_group_id',
-    'numerical_1', 'numerical_2', 'avg_sales_lag3', 
-    'avg_purchases_lag3', 'avg_sales_lag6', 'avg_purchases_lag6',
-    'avg_sales_lag12', 'avg_purchases_lag12', 'purchase_date_ymd'
+    'city_id', 'merchant_category_id', 'purchase_amount', 'numerical_1',
+    'numerical_2', 'avg_sales_lag3', 'avg_purchases_lag3', 
+    'avg_sales_lag6', 'avg_purchases_lag6', 'avg_sales_lag12', 
+    'avg_purchases_lag12', 'purchase_date_year_month_day_unit_label_code'
 ]
 loop = list(itertools.product(category, numeric))
 for i, (c, n) in enumerate(tqdm.tqdm(loop)): 
 
     if(i==0): group, batch = pandas.DataFrame(), 0
     g = combine(table=table, index=index, category=c, numeric=n, aggregation='sum')
-    if(group.empty): group = g
-    else: group = pandas.merge(group, g, how='outer', on=index)
+    # if(group.empty): group = g
+    # else: group = pandas.merge(group, g, how='outer', on=index)
+    group = g if(group.empty) else pandas.merge(group, g, how='outer', on=index)
     pass
 
     dump = (group.memory_usage().sum() / 1024**3 > 1) if(not group.empty) else False
-    if(dump or i==len(loop)-1):
+    last = i==len(loop)-1
+    if(dump or last):
         
-        checkpoint = os.path.join(storage, 'history_combination_feature_{}.csv'.format(batch))
+        checkpoint = os.path.join(storage, 'history_combination_{}.csv'.format(batch))
         group.to_csv(checkpoint, index=False)
         group = pandas.DataFrame()
         batch = batch + 1
@@ -89,9 +104,11 @@ for i, (c, n) in enumerate(tqdm.tqdm(loop)):
     continue
 
 ##
-##  Statistic feature,
-##  The definition is base on index, 
-##  group the numeric value, compute statistic.
+##  From `history` to `history_statistic`.
+table = sheet.get('history').copy()
+
+##
+##  Statistic function.
 def statisticize(table, index, numeric): 
 
     statistic = pandas.DataFrame()
@@ -130,19 +147,15 @@ def statisticize(table, index, numeric):
     return(statistic)
 
 ##
-##  Assign all to numerice.
+##  Assign numeric term, ignore some which inappropriate.
 index = 'card_id'
 numeric = [
-    'authorized_flag', 'city_id', 'category_1', 'installments', 
-    'category_3', 'merchant_category_id', 'month_lag', 
-    'purchase_amount', 'category_2', 'state_id', 'subsector_id', 
-    'merchant_group_id', 'numerical_1', 'numerical_2', 
-    'most_recent_sales_range', 'most_recent_purchases_range', 
-    'avg_sales_lag3', 'avg_purchases_lag3', 'active_months_lag3', 
-    'avg_sales_lag6', 'avg_purchases_lag6', 'active_months_lag6', 
-    'avg_sales_lag12', 'avg_purchases_lag12', 
-    'active_months_lag12', 'category_4', 'purchase_date_ymd', 
-    'purchase_date_ym', 'purchase_date_y'
+    "city_id", "merchant_category_id", "purchase_amount",
+    "merchant_group_id", "numerical_1", "numerical_2",
+    "avg_sales_lag3", "avg_purchases_lag3", "avg_sales_lag6",
+    "avg_purchases_lag6", "avg_sales_lag12", "avg_purchases_lag12", 
+    "merchant_id_label_code", "purchase_date_label_code", 
+    "purchase_date_year_month_day_unit_label_code"
 ]
 loop = numeric
 for i, n in enumerate(tqdm.tqdm(loop)): 
@@ -159,7 +172,7 @@ for i, n in enumerate(tqdm.tqdm(loop)):
     dump = (group.memory_usage().sum() / 1024**3 > 5) if(not group.empty) else False
     if(dump or i==len(loop)-1):
         
-        checkpoint = os.path.join(storage, 'history_statistic_feature_{}.csv'.format(batch))
+        checkpoint = os.path.join(storage, 'history_statistic_{}.csv'.format(batch))
         group.to_csv(checkpoint, index=False)
         group = pandas.DataFrame()
         batch = batch + 1
