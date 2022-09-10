@@ -15,8 +15,8 @@ os.makedirs(os.path.dirname(storage), exist_ok=True)
 ##  Read sheets.
 resource = './resource/kaggle/restructuring/cleaning'
 path = [
-    os.path.join(resource, 'index.csv'), 
-    os.path.join(resource, 'card.csv'), 
+    # os.path.join(resource, 'index.csv'), 
+    # os.path.join(resource, 'card.csv'), 
     os.path.join(resource, 'history.csv')
 ]
 ##  Read the table and set the all value with default type.
