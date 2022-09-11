@@ -41,7 +41,10 @@ name = 'source'
 column = table[name].copy()
 column = column.astype("str")
 table[name] = column
-table.to_csv(os.path.join(storage, 'index.csv'), index=False)
+checkpoint = os.path.join(storage, 'index.csv')
+# key = ['card_id', 'target', 'source']
+# table[key].to_csv(checkpoint, index=False)
+table.to_csv(checkpoint, index=False)
 
 ##
 ##  Get `card` table.
@@ -99,15 +102,18 @@ for c in loop:
     table["{}_{}".format(c, tag)] = encoder.transform(table[c])
     continue
 
-key = [
-    'card_id', 'first_active_month', 'feature_1', 'feature_2', 'feature_3',
-    'first_active_year_unit', 'first_active_month_unit', 
-    'first_active_month_label_code',
-    'first_active_year_unit_label_code',
-    'first_active_month_unit_label_code'
-]
-table[key].to_csv(os.path.join(storage, 'card.csv'), index=False)
-# table.to_csv(os.path.join(storage, 'card.csv'), index=False)
+checkpoint = os.path.join(storage, 'card.csv')
+# key = [
+#     'card_id',
+#     "feature_1", 
+#     "feature_2",
+#     "feature_3",
+#     "first_active_month_label_code",
+#     "first_active_year_unit_label_code",
+#     "first_active_month_unit_label_code"
+# ]
+# table[key].to_csv(checkpoint, index=False)
+table.to_csv(checkpoint, index=False)
 
 ##
 ##  Get `history` table.
@@ -327,38 +333,40 @@ for c in loop:
     table["{}_{}".format(c, tag)] = encoder.transform(table[c])
     continue
 
-key = [
-    'authorized_flag', 'card_id', 'city_id', 'category_1', 'installments', 
-    'category_3', 'merchant_category_id', 'merchant_id', 'month_lag', 
-    'purchase_amount', 'purchase_date', 'category_2', 'state_id', 
-    'subsector_id', 'merchant_group_id', 'numerical_1', 'numerical_2', 
-    'most_recent_sales_range', 'most_recent_purchases_range', 
-    'avg_sales_lag3', 'avg_purchases_lag3', 'active_months_lag3', 
-    'avg_sales_lag6', 'avg_purchases_lag6', 'active_months_lag6', 
-    'avg_sales_lag12', 'avg_purchases_lag12', 'active_months_lag12', 
-    'category_4',
-    'purchase_date_year_month_day_unit', 
-    'purchase_date_year_month_unit', 'purchase_date_year_unit', 
-    'authorized_flag_label_code', 'category_1_label_code', 
-    'category_3_label_code', 'merchant_id_label_code', 
-    'purchase_date_label_code', 'most_recent_sales_range_label_code', 
-    'most_recent_purchases_range_label_code', 'category_4_label_code', 
-    'purchase_date_year_month_day_unit_label_code', 
-    'purchase_date_year_month_unit_label_code', 
-    'purchase_date_year_unit_label_code'
-]
-table[key].to_csv(os.path.join(storage, 'history.csv'), index=False)
+checkpoint = os.path.join(storage, 'history.csv')
 # key = [
-#     'purchase_date_year_month_day_unit', 
-#     'purchase_date_year_month_unit', 'purchase_date_year_unit', 
-#     'authorized_flag_label_code', 'category_1_label_code', 
-#     'category_3_label_code', 'merchant_id_label_code', 
-#     'purchase_date_label_code', 'most_recent_sales_range_label_code', 
-#     'most_recent_purchases_range_label_code', 'category_4_label_code', 
+#     "card_id",
+#     "city_id",
+#     'installments',
+#     'merchant_category_id',
+#     'month_lag',
+#     'purchase_amount',
+#     'category_2',
+#     'state_id',
+#     'subsector_id',
+#     'merchant_group_id',
+#     'numerical_1',
+#     'numerical_2',
+#     'avg_sales_lag3',
+#     'avg_purchases_lag3',
+#     'active_months_lag3',
+#     'avg_sales_lag6',
+#     'avg_purchases_lag6',
+#     'active_months_lag6',
+#     'avg_sales_lag12',
+#     'avg_purchases_lag12',
+#     'active_months_lag12',
+#     'authorized_flag_label_code', 
+#     'category_1_label_code', 
+#     'category_3_label_code', 
+#     'merchant_id_label_code', 
+#     'purchase_date_label_code', 
+#     'most_recent_sales_range_label_code', 
+#     'most_recent_purchases_range_label_code', 
+#     'category_4_label_code', 
 #     'purchase_date_year_month_day_unit_label_code', 
 #     'purchase_date_year_month_unit_label_code', 
-#     'purchase_date_year_unit_label_code'
+#     'purchase_date_year_unit_label_code', 
 # ]
-# table[key].to_csv(os.path.join(storage, 'history(2).csv'), index=False)
-
-# # table.to_csv(os.path.join(storage, 'history.csv'), index=False)
+# table[key].to_csv(checkpoint, index=False)
+table.to_csv(checkpoint, index=False)
